@@ -10,6 +10,8 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test": "jest",
+    "seed": "ts-node src/seed/seed.cli.ts",
+    "seed:prod": "node dist/seed/seed.cli.js",
     "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
