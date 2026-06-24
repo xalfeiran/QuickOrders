@@ -1,0 +1,66 @@
+# Runs the QuickOrder database, frontend, and backend together.
+# Usage: cp .env.example .env && docker compose up --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: quickorder-db
+    environment:
+      # The backend reads the same DB_* values (see below) to build its
+      # connection — change a credential here and there in one place via .env.
+      POSTGRES_USER: ${DB_USER:-quickorder}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quickorder}
+      POSTGRES_DB: ${DB_NAME:-quickorder}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - quickorder-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-quickorder}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: quickorder-backend
+    environment:
+      - PORT=${BACKEND_PORT:-3000}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:8080}
+      - VERIFICATION_SECRET=${VERIFICATION_SECRET:-dev-insecure-secret-change-me}
+      - SESSION_SECRET=${SESSION_SECRET:-dev-insecure-session-secret}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@quickorder.local}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      # Inside the Compose network the database is reachable at host "db".
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-quickorder}
+      - DB_PASSWORD=${DB_PASSWORD:-quickorder}
+      - DB_NAME=${DB_NAME:-quickorder}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      # Wait until Postgres is accepting connections before starting the API.
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked in at build time — Vite inlines env vars during the build.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api}
+    container_name: quickorder-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+
+volumes:
+  # Named volume keeps Postgres data across `docker compose down` / restarts.
+  quickorder-db-data:
