@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { normalizePhone } from '../common/phone.util';
 import { CustomersService } from '../customers/customers.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { ManagedSessionsService } from '../managed-sessions/managed-sessions.service';
 import { MenuService } from '../menu/menu.service';
 import { DraftOrdersService } from './draft-orders.service';
 import { ConfirmOrderDto } from './dto/confirm-order.dto';
@@ -22,6 +23,7 @@ export class OrdersService {
     private readonly customers: CustomersService,
     private readonly draftOrders: DraftOrdersService,
     private readonly inventory: InventoryService,
+    private readonly managedSessions: ManagedSessionsService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -72,6 +74,16 @@ export class OrdersService {
     // so an order is never recorded without the inventory to back it (and vice
     // versa). Items without recipes consume nothing.
     const saved = await this.dataSource.transaction(async (manager) => {
+      // If this order came from a manager link, consume it (single-use).
+      if (dto.managedSessionToken) {
+        await this.managedSessions.consumeForOrder(
+          manager,
+          dto.managedSessionToken,
+          business!.id,
+          dto.phone,
+        );
+      }
+
       await this.inventory.consumeForOrder(
         manager,
         business!.id,

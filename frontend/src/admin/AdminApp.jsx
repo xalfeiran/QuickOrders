@@ -8,6 +8,7 @@ import AdminMenuPage from './AdminMenuPage.jsx';
 import AdminMenuItemPage from './AdminMenuItemPage.jsx';
 import AdminRecipePage from './AdminRecipePage.jsx';
 import AdminInventoryPage from './AdminInventoryPage.jsx';
+import AdminLinksPage from './AdminLinksPage.jsx';
 
 // The admin dashboard, mounted at /admin/*. Has its own auth provider and
 // routes, separate from the customer app.
@@ -24,6 +25,7 @@ export default function AdminApp() {
           <Route path="menu/:id/recipe" element={<AdminRecipePage />} />
           <Route path="menu/:id" element={<AdminMenuItemPage />} />
           <Route path="inventory" element={<AdminInventoryPage />} />
+          <Route path="links" element={<AdminLinksPage />} />
         </Route>
       </Routes>
     </AdminAuthProvider>

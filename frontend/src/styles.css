@@ -816,6 +816,32 @@ body {
   margin: 6px 0 4px;
 }
 
+/* Generated manager links */
+.link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
+.link-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.link-card__url {
+  font-size: 0.82rem;
+  color: var(--brand);
+  word-break: break-all;
+}
+
 /* --- Admin responsive (phones) --- */
 @media (max-width: 640px) {
   .admin__header {

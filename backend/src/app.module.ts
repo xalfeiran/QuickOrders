@@ -7,6 +7,7 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { CustomersModule } from './customers/customers.module';
 import { HealthModule } from './health/health.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { ManagedSessionsModule } from './managed-sessions/managed-sessions.module';
 import { MenuModule } from './menu/menu.module';
 import { OrdersModule } from './orders/orders.module';
 import { SeedModule } from './seed/seed.module';
@@ -25,6 +26,7 @@ import { VerificationModule } from './verification/verification.module';
     VerificationModule,
     AuthModule,
     InventoryModule,
+    ManagedSessionsModule,
     AdminModule,
     SeedModule,
   ],

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBusiness } from '../business/BusinessContext.jsx';
+import { useManagedSession } from '../business/ManagedSessionContext.jsx';
 import { useCart } from '../cart/CartContext.jsx';
 import { describeOptions } from '../cart/line.js';
 import { api } from '../api/client.js';
@@ -23,18 +24,30 @@ const EMPTY_ADDRESS = {
 export default function CheckoutPage() {
   const { items, totalCents, orderToken, clear } = useCart();
   const { slug } = useBusiness();
+  const { managed } = useManagedSession();
   const navigate = useNavigate();
   const base = `/b/${slug}`;
 
-  const [step, setStep] = useState(0);
-  const [grant, setGrant] = useState(null);
-  const [phone, setPhone] = useState('');
+  // When arriving via a manager link, the phone is already verified — start at
+  // the details step with the grant + phone prefilled.
+  const [step, setStep] = useState(managed?.grant ? 1 : 0);
+  const [grant, setGrant] = useState(managed?.grant ?? null);
+  const [phone, setPhone] = useState(managed?.phone ?? '');
   const [customerName, setCustomerName] = useState('');
   const [fulfillmentType, setFulfillmentType] = useState('pickup');
   const [address, setAddress] = useState(EMPTY_ADDRESS);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Prefill returning-customer details when the phone is already verified
+  // through a manager link.
+  useEffect(() => {
+    if (managed?.grant && managed?.phone) {
+      prefillCustomer(managed.phone, managed.grant);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -76,12 +89,10 @@ export default function CheckoutPage() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  // After the phone is verified, prefill returning customers' details.
-  async function handleVerified(newGrant, verifiedPhone) {
-    setGrant(newGrant);
-    setPhone(verifiedPhone);
+  // Prefills name + last address for a returning customer (best-effort).
+  async function prefillCustomer(verifiedPhone, verifiedGrant) {
     try {
-      const result = await api.lookupCustomer(verifiedPhone, newGrant);
+      const result = await api.lookupCustomer(verifiedPhone, verifiedGrant);
       if (result.registered) {
         if (result.name) setCustomerName(result.name);
         if (result.lastAddress) {
@@ -99,6 +110,13 @@ export default function CheckoutPage() {
     } catch {
       // Lookup is best-effort; the customer can still fill everything in.
     }
+  }
+
+  // After the phone is verified, prefill returning customers' details.
+  async function handleVerified(newGrant, verifiedPhone) {
+    setGrant(newGrant);
+    setPhone(verifiedPhone);
+    await prefillCustomer(verifiedPhone, newGrant);
     next();
   }
 
@@ -121,6 +139,7 @@ export default function CheckoutPage() {
       const order = await api.confirmOrder(
         {
           orderToken: token,
+          managedSessionToken: managed?.token,
           phone,
           customerName,
           fulfillmentType,

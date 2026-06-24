@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { CustomersModule } from '../customers/customers.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { ManagedSessionsModule } from '../managed-sessions/managed-sessions.module';
 import { MenuModule } from '../menu/menu.module';
 import { VerificationModule } from '../verification/verification.module';
 import { DraftOrder } from './draft-order.entity';
@@ -23,6 +24,7 @@ import { OrdersService } from './orders.service';
     VerificationModule,
     BusinessesModule,
     InventoryModule,
+    ManagedSessionsModule,
     TypeOrmModule.forFeature([DraftOrder, Order, OrderLine]),
   ],
   controllers: [OrdersController, DraftOrdersController],

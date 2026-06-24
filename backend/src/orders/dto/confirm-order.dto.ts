@@ -73,6 +73,11 @@ export class ConfirmOrderDto {
   @IsString()
   orderToken!: string;
 
+  // Present when ordering from a manager-generated link; consumed on placement.
+  @IsOptional()
+  @IsString()
+  managedSessionToken?: string;
+
   // The phone must match the verification grant in the request header.
   @IsString()
   @MinLength(7)

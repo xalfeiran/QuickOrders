@@ -45,6 +45,9 @@ export const api = {
       body: JSON.stringify({ phone, code }),
     }),
 
+  // Exchanges a manager-link token for a verification grant (no SMS).
+  resolveSession: (token) => request(`/sessions/${token}`),
+
   // Looks up a returning customer. Requires the grant from confirmVerification.
   lookupCustomer: (phone, grant) =>
     request(`/customers/lookup?phone=${encodeURIComponent(phone)}`, {
@@ -134,4 +137,11 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(recipe),
     }),
+
+  // Manager: create a pre-verified order link for a phone.
+  adminCreateOrderLink: (businessSlug, phone) =>
+    request(
+      `/admin/order-links${businessSlug ? `?businessSlug=${encodeURIComponent(businessSlug)}` : ''}`,
+      { method: 'POST', body: JSON.stringify({ phone }) },
+    ),
 };

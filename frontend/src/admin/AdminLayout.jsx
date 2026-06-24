@@ -28,6 +28,9 @@ export default function AdminLayout() {
           <NavLink to="/admin/inventory" className="admin__navlink">
             Inventario
           </NavLink>
+          <NavLink to="/admin/links" className="admin__navlink">
+            Enlaces
+          </NavLink>
         </div>
         <div className="admin__user">
           <span>
