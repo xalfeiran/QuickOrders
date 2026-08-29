@@ -82,9 +82,11 @@ jobs:
             backend/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH%/}/"
 
       - name: Install and migrate on server
+        env:
+          TERM: xterm-256color
         run: |
-          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" \
-            "cd \"${DEPLOY_PATH}\" \
+          ssh -tt -i ~/.ssh/deploy_key -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" \
+            "export TERM=xterm-256color; cd \"${DEPLOY_PATH}\" \
               && test -f .env \
               && ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
               && ${PHP_BIN} artisan migrate --force \
