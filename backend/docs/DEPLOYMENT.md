@@ -127,15 +127,15 @@ over SSH and runs Composer, migrations, and Laravel cache commands there.
 Add these GitHub repository secrets before enabling it:
 
 ```
-CPANEL_SSH_HOST=your-domain.com
-CPANEL_SSH_PORT=22
-CPANEL_SSH_USER=youruser
-CPANEL_SSH_KEY=<private SSH key with access to the cPanel account>
-CPANEL_BACKEND_PATH=/home/youruser/quickorder-backend
+SSH_HOST=your-domain.com
+SSH_PORT=22
+SSH_USER=youruser
+SSH_PRIVATE_KEY=<private SSH key with access to the cPanel account>
+DEPLOY_PATH=/home/youruser/quickorder-backend
 BACKEND_HEALTHCHECK_URL=https://api.your-domain.com/api/health
 ```
 
-`CPANEL_SSH_PORT` and `BACKEND_HEALTHCHECK_URL` are optional. If your cPanel
+`SSH_PORT` and `BACKEND_HEALTHCHECK_URL` are optional. If your cPanel
 host exposes PHP or Composer under non-standard commands, also set:
 
 ```

@@ -20,11 +20,11 @@ jobs:
     environment: production
 
     env:
-      SSH_HOST: ${{ secrets.CPANEL_SSH_HOST }}
-      SSH_PORT: ${{ secrets.CPANEL_SSH_PORT || '22' }}
-      SSH_USER: ${{ secrets.CPANEL_SSH_USER }}
-      SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_KEY }}
-      DEPLOY_PATH: ${{ secrets.CPANEL_BACKEND_PATH }}
+      SSH_HOST: ${{ secrets.SSH_HOST || secrets.CPANEL_SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT || secrets.CPANEL_SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.SSH_USER || secrets.CPANEL_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.CPANEL_SSH_KEY }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || secrets.CPANEL_BACKEND_PATH }}
       PHP_BIN: ${{ secrets.CPANEL_PHP_BINARY || 'php' }}
       COMPOSER_BIN: ${{ secrets.CPANEL_COMPOSER_BINARY || 'composer' }}
       HEALTHCHECK_URL: ${{ secrets.BACKEND_HEALTHCHECK_URL }}
