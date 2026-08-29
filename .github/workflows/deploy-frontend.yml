@@ -1,0 +1,89 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - frontend/**
+      - .github/workflows/deploy-frontend.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy Vite frontend
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST || secrets.CPANEL_SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT || secrets.CPANEL_SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.SSH_USER || secrets.CPANEL_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.CPANEL_SSH_KEY }}
+      FRONTEND_DEPLOY_PATH: ${{ secrets.FRONTEND_DEPLOY_PATH || secrets.DEPLOY_FRONTEND_PATH }}
+      VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+      FRONTEND_HEALTHCHECK_URL: ${{ secrets.FRONTEND_HEALTHCHECK_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          for name in SSH_HOST SSH_USER SSH_PRIVATE_KEY FRONTEND_DEPLOY_PATH VITE_API_BASE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required secret: ${name}"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Ensure frontend deploy path
+        env:
+          TERM: xterm-256color
+        run: |
+          ssh -tt -i ~/.ssh/deploy_key -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" \
+            "export TERM=xterm-256color; mkdir -p \"${FRONTEND_DEPLOY_PATH}\""
+
+      - name: Sync frontend files
+        run: |
+          rsync -az --delete \
+            --exclude='.well-known/' \
+            --exclude='cgi-bin/' \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT}" \
+            frontend/dist/ "${SSH_USER}@${SSH_HOST}:${FRONTEND_DEPLOY_PATH%/}/"
+
+      - name: Smoke test
+        if: env.FRONTEND_HEALTHCHECK_URL != ''
+        run: curl -fsS "$FRONTEND_HEALTHCHECK_URL"
