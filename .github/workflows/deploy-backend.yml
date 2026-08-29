@@ -96,6 +96,8 @@ jobs:
               ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader || exit 1; \
               echo 'Running database migrations'; \
               ${PHP_BIN} artisan migrate --force || exit 1; \
+              echo 'Seeding default business and admin records'; \
+              ${PHP_BIN} artisan db:seed --force || exit 1; \
               echo 'Rebuilding Laravel caches'; \
               ${PHP_BIN} artisan config:cache || exit 1; \
               ${PHP_BIN} artisan route:cache || exit 1; \

@@ -115,14 +115,16 @@ can't fully substitute for.
 
 `db:seed` is idempotent (safe to re-run) — it creates the default business
 + menu and the superadmin only if they don't already exist, mirroring the
-old NestJS backend's automatic first-boot seed.
+old NestJS backend's automatic first-boot seed. The GitHub Actions backend
+deploy runs it after migrations for the same reason.
 
 ### GitHub Actions deploy
 
 The repo includes `.github/workflows/deploy-backend.yml`, which deploys the
 Laravel backend automatically when `backend/**` is pushed to `master`. It
 runs the backend test suite first, then syncs `backend/` to the cPanel host
-over SSH and runs Composer, migrations, and Laravel cache commands there.
+over SSH and runs Composer, migrations, seeders, and Laravel cache commands
+there.
 
 The server must already have its production `.env` file at `DEPLOY_PATH`.
 The action intentionally does not upload or overwrite `.env`.
