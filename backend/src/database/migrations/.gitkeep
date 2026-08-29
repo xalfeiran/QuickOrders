@@ -1,5 +1,0 @@
-# TypeORM migrations live here.
-# Generate one after adding/changing an entity:
-#   npm run migration:generate -- src/database/migrations/<Name>
-# Apply pending migrations (also runs automatically on app startup):
-#   npm run migration:run
