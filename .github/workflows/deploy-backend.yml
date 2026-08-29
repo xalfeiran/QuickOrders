@@ -86,14 +86,21 @@ jobs:
           TERM: xterm-256color
         run: |
           ssh -tt -i ~/.ssh/deploy_key -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" \
-            "export TERM=xterm-256color; cd \"${DEPLOY_PATH}\" \
-              && test -f .env \
-              && ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
-              && ${PHP_BIN} artisan migrate --force \
-              && ${PHP_BIN} artisan config:cache \
-              && ${PHP_BIN} artisan route:cache \
-              && ${PHP_BIN} artisan view:cache \
-              && chmod -R ug+rw storage bootstrap/cache"
+            "export TERM=xterm-256color; \
+              cd \"${DEPLOY_PATH}\" || { echo '::error::DEPLOY_PATH does not exist or is not accessible'; exit 1; }; \
+              test -f .env || { echo '::error::.env is missing on the server at DEPLOY_PATH. Create it once before deploying.'; exit 1; }; \
+              command -v ${PHP_BIN} >/dev/null || { echo '::error::PHP binary not found. Set CPANEL_PHP_BINARY if cPanel uses a custom PHP path.'; exit 1; }; \
+              command -v ${COMPOSER_BIN} >/dev/null || { echo '::error::Composer binary not found. Set CPANEL_COMPOSER_BINARY if cPanel uses a custom Composer path.'; exit 1; }; \
+              mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache; \
+              echo 'Installing production Composer dependencies'; \
+              ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader || exit 1; \
+              echo 'Running database migrations'; \
+              ${PHP_BIN} artisan migrate --force || exit 1; \
+              echo 'Rebuilding Laravel caches'; \
+              ${PHP_BIN} artisan config:cache || exit 1; \
+              ${PHP_BIN} artisan route:cache || exit 1; \
+              ${PHP_BIN} artisan view:cache || exit 1; \
+              chmod -R ug+rw storage bootstrap/cache || exit 1"
 
       - name: Smoke test
         if: env.HEALTHCHECK_URL != ''

@@ -124,6 +124,9 @@ Laravel backend automatically when `backend/**` is pushed to `master`. It
 runs the backend test suite first, then syncs `backend/` to the cPanel host
 over SSH and runs Composer, migrations, and Laravel cache commands there.
 
+The server must already have its production `.env` file at `DEPLOY_PATH`.
+The action intentionally does not upload or overwrite `.env`.
+
 Add these GitHub repository secrets before enabling it:
 
 ```
