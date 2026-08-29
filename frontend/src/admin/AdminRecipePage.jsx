@@ -1,44 +1,193 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 
-// A list of {ingredientId, quantity} rows used for the base and each option.
-function RecipeRows({ rows, ingredients, onChange }) {
-  const update = (i, patch) =>
-    onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const add = () => onChange([...rows, { ingredientId: '', quantity: '' }]);
-  const remove = (i) => onChange(rows.filter((_, j) => j !== i));
+// Same fixed unit choices as Inventario (frontend/src/admin/AdminInventoryPage.jsx).
+const UNITS = ['gr', 'ml', 'pza'];
+
+// One section of a recipe (the dish's base, or one option): the ingredients
+// already added show as clickable chips, and a small form underneath adds a
+// new one or edits whichever chip was clicked. Typing in the box filters a
+// dropdown of matching ingredients — pick one (or just finish typing its
+// exact name) and enter a quantity. If the name doesn't match anything in
+// Inventario, a unit picker appears so a brand-new ingredient can be created
+// right here — it's added to Inventario too, so it shows up next time.
+function RecipeRows({ rows, ingredients, onChange, onCreateIngredient }) {
+  const [text, setText] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [unit, setUnit] = useState(UNITS[0]);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState(null);
+  const inputRef = useRef(null);
+
+  const findIngredient = (id) => ingredients.find((ing) => ing.id === id);
+
+  // The ingredient the typed text currently refers to, if any — matched by
+  // exact name so both "clicked a suggestion" and "typed the full name"
+  // resolve the same way. No match means this is a new ingredient.
+  const matchedIngredient =
+    ingredients.find((ing) => ing.name.trim().toLowerCase() === text.trim().toLowerCase()) ??
+    null;
+
+  const suggestions =
+    showSuggestions && text.trim()
+      ? ingredients
+          .filter((ing) => ing.name.toLowerCase().includes(text.trim().toLowerCase()))
+          .slice(0, 6)
+      : [];
+
+  const resetForm = () => {
+    setText('');
+    setQuantity('');
+    setUnit(UNITS[0]);
+    setEditingIndex(null);
+    setShowSuggestions(false);
+    setCreateError(null);
+  };
+
+  const pickSuggestion = (ing) => {
+    setText(ing.name);
+    setShowSuggestions(false);
+  };
+
+  const editRow = (i) => {
+    const row = rows[i];
+    const ing = findIngredient(row.ingredientId);
+    setText(ing ? ing.name : '');
+    setQuantity(row.quantity);
+    setUnit(ing ? ing.unit : UNITS[0]);
+    setEditingIndex(i);
+    setShowSuggestions(false);
+    setCreateError(null);
+    inputRef.current?.focus();
+  };
+
+  const removeRow = (i, e) => {
+    e.stopPropagation();
+    onChange(rows.filter((_, j) => j !== i));
+    if (editingIndex === i) resetForm();
+  };
+
+  const save = async () => {
+    if (!text.trim() || !(Number(quantity) > 0) || creating) return;
+    setCreateError(null);
+
+    let ingredientId = matchedIngredient?.id ?? null;
+    if (!ingredientId) {
+      setCreating(true);
+      try {
+        const created = await onCreateIngredient(text.trim(), unit);
+        ingredientId = created.id;
+      } catch (err) {
+        setCreateError(err.message || 'No se pudo crear el ingrediente.');
+        setCreating(false);
+        return;
+      }
+      setCreating(false);
+    }
+
+    const newRow = { ingredientId, quantity };
+    // Editing the chip that was clicked, or landing on an ingredient that's
+    // already in the list some other way: either way, update that row
+    // instead of creating a duplicate.
+    const targetIndex = editingIndex ?? rows.findIndex((r) => r.ingredientId === ingredientId);
+    onChange(
+      targetIndex === -1
+        ? [...rows, newRow]
+        : rows.map((r, j) => (j === targetIndex ? newRow : r)),
+    );
+    resetForm();
+  };
 
   return (
     <div className="recipe-rows">
-      {rows.map((r, i) => (
-        <div key={i} className="opt-row">
+      {rows.length > 0 && (
+        <div className="recipe-chips">
+          {rows.map((r, i) => {
+            const ing = findIngredient(r.ingredientId);
+            return (
+              <button
+                type="button"
+                key={r.ingredientId || i}
+                className={`recipe-chip${editingIndex === i ? ' recipe-chip--active' : ''}`}
+                onClick={() => editRow(i)}
+              >
+                {ing ? `${ing.name} — ${r.quantity} ${ing.unit}` : '(ingrediente eliminado)'}
+                <span className="recipe-chip__remove" onClick={(e) => removeRow(i, e)}>
+                  ×
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="recipe-add">
+        <div className="recipe-add__field">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Buscar o crear ingrediente…"
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          />
+          {suggestions.length > 0 && (
+            <ul className="recipe-suggestions">
+              {suggestions.map((ing) => (
+                <li key={ing.id}>
+                  <button type="button" onMouseDown={() => pickSuggestion(ing)}>
+                    {ing.name} <span className="recipe-suggestion__unit">({ing.unit})</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <input
+          type="number"
+          step="0.001"
+          placeholder={matchedIngredient ? `cant. (${matchedIngredient.unit})` : 'cant.'}
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+        />
+        {text.trim() && !matchedIngredient && (
           <select
-            value={r.ingredientId}
-            onChange={(e) => update(i, { ingredientId: e.target.value })}
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            title="Unidad del ingrediente nuevo"
           >
-            <option value="">— ingrediente —</option>
-            {ingredients.map((ing) => (
-              <option key={ing.id} value={ing.id}>
-                {ing.name} ({ing.unit})
+            {UNITS.map((u) => (
+              <option key={u} value={u}>
+                {u}
               </option>
             ))}
           </select>
-          <input
-            type="number"
-            step="0.001"
-            placeholder="cant."
-            value={r.quantity}
-            onChange={(e) => update(i, { quantity: e.target.value })}
-          />
-          <button type="button" className="link-button" onClick={() => remove(i)}>
-            ×
+        )}
+        <button
+          type="button"
+          className="button"
+          disabled={!text.trim() || !(Number(quantity) > 0) || creating}
+          onClick={save}
+        >
+          {creating ? 'Creando…' : editingIndex !== null ? 'Actualizar' : 'Agregar'}
+        </button>
+        {editingIndex !== null && (
+          <button type="button" className="link-button" onClick={resetForm} disabled={creating}>
+            Cancelar
           </button>
-        </div>
-      ))}
-      <button type="button" className="link-button" onClick={add}>
-        + ingrediente
-      </button>
+        )}
+      </div>
+      {text.trim() && !matchedIngredient && (
+        <p className="recipe-add__hint">Ingrediente nuevo — se agregará a Inventario.</p>
+      )}
+      {createError && <p className="notice notice--error">{createError}</p>}
     </div>
   );
 }
@@ -87,6 +236,19 @@ export default function AdminRecipePage() {
     load();
   }, [id]);
 
+  // Creates a new ingredient in Inventario and adds it to the ingredients
+  // list shared by every RecipeRows section, so it's available immediately
+  // (in the base, and in every option group) without a page reload.
+  async function createIngredient(name, unit) {
+    const created = await api.adminInventoryCreate(item.businessSlug, {
+      name,
+      unit,
+      stockQty: 0,
+    });
+    setIngredients((prev) => [...prev, created]);
+    return created;
+  }
+
   const cleanRows = (rows) =>
     rows
       .filter((r) => r.ingredientId && Number(r.quantity) > 0)
@@ -125,12 +287,18 @@ export default function AdminRecipePage() {
 
       {ingredients.length === 0 && (
         <p className="notice">
-          No hay ingredientes. Crea ingredientes en Inventario primero.
+          Aún no tienes ingredientes. Escribe el nombre en el campo de abajo para crear el
+          primero.
         </p>
       )}
 
       <h3 className="admin-subhead">Base del platillo</h3>
-      <RecipeRows rows={base} ingredients={ingredients} onChange={setBase} />
+      <RecipeRows
+        rows={base}
+        ingredients={ingredients}
+        onChange={setBase}
+        onCreateIngredient={createIngredient}
+      />
 
       {item.optionGroups.map((group) => (
         <div key={group.id} className="recipe-group">
@@ -146,6 +314,7 @@ export default function AdminRecipePage() {
                   onChange={(rows) =>
                     setOptions((o) => ({ ...o, [key]: rows }))
                   }
+                  onCreateIngredient={createIngredient}
                 />
               </div>
             );
