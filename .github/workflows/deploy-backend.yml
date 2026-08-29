@@ -1,0 +1,98 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - backend/**
+      - .github/workflows/deploy-backend.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Test and deploy Laravel backend
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      SSH_HOST: ${{ secrets.CPANEL_SSH_HOST }}
+      SSH_PORT: ${{ secrets.CPANEL_SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.CPANEL_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+      DEPLOY_PATH: ${{ secrets.CPANEL_BACKEND_PATH }}
+      PHP_BIN: ${{ secrets.CPANEL_PHP_BINARY || 'php' }}
+      COMPOSER_BIN: ${{ secrets.CPANEL_COMPOSER_BINARY || 'composer' }}
+      HEALTHCHECK_URL: ${{ secrets.BACKEND_HEALTHCHECK_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, ctype, dom, fileinfo, mbstring, openssl, pdo_mysql, sqlite3, tokenizer, xml
+          coverage: none
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run backend tests
+        working-directory: backend
+        run: php artisan test
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          for name in SSH_HOST SSH_USER SSH_PRIVATE_KEY DEPLOY_PATH; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required secret: ${name}"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync backend files
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/data/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='bootstrap/cache/*.php' \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT}" \
+            backend/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH%/}/"
+
+      - name: Install and migrate on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" \
+            "cd \"${DEPLOY_PATH}\" \
+              && test -f .env \
+              && ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
+              && ${PHP_BIN} artisan migrate --force \
+              && ${PHP_BIN} artisan config:cache \
+              && ${PHP_BIN} artisan route:cache \
+              && ${PHP_BIN} artisan view:cache \
+              && chmod -R ug+rw storage bootstrap/cache"
+
+      - name: Smoke test
+        if: env.HEALTHCHECK_URL != ''
+        run: curl -fsS "$HEALTHCHECK_URL"
