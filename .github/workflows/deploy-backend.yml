@@ -91,7 +91,7 @@ jobs:
               test -f .env || { echo '::error::.env is missing on the server at DEPLOY_PATH. Create it once before deploying.'; exit 1; }; \
               command -v ${PHP_BIN} >/dev/null || { echo '::error::PHP binary not found. Set CPANEL_PHP_BINARY if cPanel uses a custom PHP path.'; exit 1; }; \
               command -v ${COMPOSER_BIN} >/dev/null || { echo '::error::Composer binary not found. Set CPANEL_COMPOSER_BINARY if cPanel uses a custom Composer path.'; exit 1; }; \
-              mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache; \
+              mkdir -p resources/views storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache; \
               echo 'Installing production Composer dependencies'; \
               ${COMPOSER_BIN} install --no-dev --prefer-dist --no-interaction --optimize-autoloader || exit 1; \
               echo 'Running database migrations'; \
@@ -99,7 +99,6 @@ jobs:
               echo 'Rebuilding Laravel caches'; \
               ${PHP_BIN} artisan config:cache || exit 1; \
               ${PHP_BIN} artisan route:cache || exit 1; \
-              ${PHP_BIN} artisan view:cache || exit 1; \
               chmod -R ug+rw storage bootstrap/cache || exit 1"
 
       - name: Smoke test
