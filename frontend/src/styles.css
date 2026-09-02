@@ -1252,3 +1252,18 @@ body {
   font-size: 0.85rem;
   line-height: 1.35;
 }
+
+.landing__footer {
+  margin: 28px 20px 0;
+  text-align: center;
+}
+
+.landing__footer a {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.landing__footer a:hover {
+  color: var(--brand);
+}

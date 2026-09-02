@@ -53,6 +53,16 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <footer className="landing__footer">
+        <a
+          href="https://mindware.com.mx"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Un producto de Mindware
+        </a>
+      </footer>
     </div>
   );
 }
