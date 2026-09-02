@@ -18,7 +18,10 @@ export default function AdminLayout() {
     <div className="admin">
       <header className="admin__header">
         <div className="admin__nav">
-          <span className="admin__brand">QuickOrder · Panel</span>
+          <span className="admin__brand">
+            <img src="/logo-white.png" alt="" aria-hidden="true" className="admin__brand-logo" />
+            QuickOrder · Panel
+          </span>
           <NavLink to="/admin" end className="admin__navlink">
             Pedidos
           </NavLink>

@@ -6,6 +6,12 @@ export default function LandingPage() {
   return (
     <div className="landing">
       <section className="landing__hero">
+        <img
+          src="/logo-white.png"
+          alt=""
+          aria-hidden="true"
+          className="landing__logo"
+        />
         <p className="landing__eyebrow">Recoger o a domicilio</p>
         <h1 className="landing__title">QuickOrder</h1>
         <p className="landing__subtitle">

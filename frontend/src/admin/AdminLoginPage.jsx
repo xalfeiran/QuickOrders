@@ -26,6 +26,7 @@ export default function AdminLoginPage() {
   return (
     <div className="admin-login">
       <div className="admin-login__card">
+        <img src="/logo.png" alt="QuickOrder" className="admin-login__logo" />
         <h1 className="admin-login__title">Panel · Acceso</h1>
         <form className="form" onSubmit={handleSubmit}>
           <label className="field">
