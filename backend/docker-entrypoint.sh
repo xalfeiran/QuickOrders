@@ -8,7 +8,7 @@ set -e
 echo "Running database migrations..."
 php artisan migrate --force
 
-echo "Seeding (idempotent — creates the default business/menu/superadmin only if missing)..."
+echo "Seeding (idempotent — creates the default business/menu/superadmin/business admin only if missing)..."
 php artisan db:seed --force
 
 exec "$@"

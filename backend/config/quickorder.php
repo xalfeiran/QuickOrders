@@ -12,6 +12,11 @@ return [
     'admin_email' => env('ADMIN_EMAIL', 'admin@quickorder.local'),
     'admin_password' => env('ADMIN_PASSWORD', 'changeme'),
 
+    // Seeded business_admin for the default (test) business, Alita Mía
+    // (see database/seeders/BusinessAdminSeeder.php).
+    'business_admin_email' => env('BUSINESS_ADMIN_EMAIL', 'alita-mia@quickorder.local'),
+    'business_admin_password' => env('BUSINESS_ADMIN_PASSWORD', 'changeme'),
+
     // Slug of the business seeded on first boot. The legacy single-business
     // endpoints (/api/menu, /orders/draft without a businessSlug) resolve to it.
     'default_business_slug' => env('DEFAULT_BUSINESS_SLUG', 'alita-mia'),
