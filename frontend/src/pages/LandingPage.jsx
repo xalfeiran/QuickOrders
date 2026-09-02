@@ -1,37 +1,19 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../api/client.js';
 import { DEFAULT_BUSINESS_SLUG } from '../business/BusinessContext.jsx';
 
-// Página de bienvenida en la URL base ("/"). Presenta el restaurante y
-// lleva al visitante al menú del negocio activo (DEFAULT_BUSINESS_SLUG).
-// Cuando haya varios negocios, este es el lugar para dejar elegir uno.
+// Página de bienvenida en la URL base ("/"). Presenta QuickOrder de forma
+// genérica (no el nombre de ningún restaurante en particular) y lleva al
+// visitante a hacer su pedido. Hoy solo hay un negocio activo
+// (DEFAULT_BUSINESS_SLUG); cuando haya varios, este es el lugar para dejar
+// elegir uno en vez de enlazar directo al menú.
 export default function LandingPage() {
-  const [business, setBusiness] = useState({ name: '', loading: true });
   const menuHref = `/b/${DEFAULT_BUSINESS_SLUG}`;
-
-  useEffect(() => {
-    let active = true;
-    api
-      .getBusiness(DEFAULT_BUSINESS_SLUG)
-      .then((b) => {
-        if (active) setBusiness({ name: b.name, phone: b.phone, loading: false });
-      })
-      .catch(() => {
-        if (active) setBusiness({ name: '', loading: false, error: true });
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <div className="landing">
       <section className="landing__hero">
         <p className="landing__eyebrow">Pedidos para llevar</p>
-        <h1 className="landing__title">
-          {business.loading ? 'Bienvenido' : business.name || 'Bienvenido'}
-        </h1>
+        <h1 className="landing__title">QuickOrder</h1>
         <p className="landing__subtitle">
           Arma tu pedido, elige tus platillos favoritos y pasa a recogerlo sin
           filas ni esperas.
@@ -61,22 +43,15 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="landing__feature">
-          <span className="landing__feature-icon" aria-hidden="true">🌶️</span>
+          <span className="landing__feature-icon" aria-hidden="true">🍽️</span>
           <div>
             <p className="landing__feature-title">Personaliza tu platillo</p>
             <p className="landing__feature-desc">
-              Elige salsas, extras y todo a tu gusto antes de pagar.
+              Elige opciones, extras y todo a tu gusto antes de pagar.
             </p>
           </div>
         </div>
       </section>
-
-      {business.phone && (
-        <p className="landing__contact">
-          ¿Dudas? Llámanos al{' '}
-          <a href={`tel:${business.phone}`}>{business.phone}</a>
-        </p>
-      )}
     </div>
   );
 }

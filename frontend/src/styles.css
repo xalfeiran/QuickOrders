@@ -1260,16 +1260,3 @@ body {
   font-size: 0.85rem;
   line-height: 1.35;
 }
-
-.landing__contact {
-  margin: 28px 20px 0;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.landing__contact a {
-  color: var(--brand);
-  font-weight: 600;
-  text-decoration: none;
-}
