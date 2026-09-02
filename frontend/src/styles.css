@@ -1218,14 +1218,6 @@ body {
   line-height: 1.4;
 }
 
-.landing__cta {
-  max-width: 320px;
-  margin-left: auto;
-  margin-right: auto;
-  background: #fff;
-  color: var(--brand);
-}
-
 .landing__features {
   display: flex;
   flex-direction: column;
