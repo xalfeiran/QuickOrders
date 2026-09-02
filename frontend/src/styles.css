@@ -1178,3 +1178,98 @@ body {
     justify-content: flex-end;
   }
 }
+
+/* --- Landing page (root URL) --- */
+.landing {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 0 0 32px;
+}
+
+.landing__hero {
+  padding: 48px 20px 32px;
+  background: var(--brand);
+  color: #fff;
+  text-align: center;
+}
+
+.landing__eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.landing__title {
+  margin: 0 0 12px;
+  font-size: 1.9rem;
+  line-height: 1.15;
+}
+
+.landing__subtitle {
+  margin: 0 auto 24px;
+  max-width: 340px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.landing__cta {
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  color: var(--brand);
+}
+
+.landing__features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px 0;
+}
+
+.landing__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.landing__feature-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.landing__feature-title {
+  margin: 0 0 2px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.landing__feature-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.landing__contact {
+  margin: 28px 20px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.landing__contact a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
