@@ -54,6 +54,7 @@ Route::middleware('admin.session')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::get('auth/me', [AuthController::class, 'me'])->middleware('auth:web');
+    Route::put('auth/password', [AuthController::class, 'changePassword'])->middleware('auth:web');
 
     // ----- Admin dashboard API -----
     Route::middleware(['auth:web', 'admin.role:superadmin,business_admin'])

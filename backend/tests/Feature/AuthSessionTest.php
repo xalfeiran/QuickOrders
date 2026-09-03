@@ -37,3 +37,68 @@ it('returns a json 401 for unauthenticated auth me requests', function () {
         ->assertUnauthorized()
         ->assertJsonPath('message', 'Unauthenticated.');
 });
+
+it('changes the logged-in users password when the current password is correct', function () {
+    $user = AdminUser::create([
+        'email' => 'owner@quickorder.test',
+        'password_hash' => Hash::make('old-password'),
+        'name' => 'Owner',
+        'role' => 'superadmin',
+        'active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->putJson('/api/auth/password', [
+            'currentPassword' => 'old-password',
+            'newPassword' => 'new-password-123',
+        ])
+        ->assertOk()
+        ->assertJsonPath('ok', true);
+
+    expect(Hash::check('new-password-123', $user->fresh()->password_hash))->toBeTrue();
+});
+
+it('rejects a password change with the wrong current password', function () {
+    $user = AdminUser::create([
+        'email' => 'owner2@quickorder.test',
+        'password_hash' => Hash::make('old-password'),
+        'name' => 'Owner',
+        'role' => 'superadmin',
+        'active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->putJson('/api/auth/password', [
+            'currentPassword' => 'wrong-password',
+            'newPassword' => 'new-password-123',
+        ])
+        ->assertUnauthorized();
+
+    expect(Hash::check('old-password', $user->fresh()->password_hash))->toBeTrue();
+});
+
+it('rejects a password change without a session', function () {
+    $this->putJson('/api/auth/password', [
+        'currentPassword' => 'old-password',
+        'newPassword' => 'new-password-123',
+    ])
+        ->assertUnauthorized()
+        ->assertJsonPath('message', 'Unauthenticated.');
+});
+
+it('rejects a new password shorter than 8 characters', function () {
+    $user = AdminUser::create([
+        'email' => 'owner3@quickorder.test',
+        'password_hash' => Hash::make('old-password'),
+        'name' => 'Owner',
+        'role' => 'superadmin',
+        'active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->putJson('/api/auth/password', [
+            'currentPassword' => 'old-password',
+            'newPassword' => 'short',
+        ])
+        ->assertStatus(422);
+});
