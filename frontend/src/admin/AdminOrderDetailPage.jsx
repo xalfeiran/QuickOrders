@@ -89,7 +89,7 @@ export default function AdminOrderDetailPage() {
       </dl>
 
       <ul className="cart-list">
-        {order.items.map((line) => (
+        {(order.items ?? []).map((line) => (
           <li key={line.id} className="cart-line">
             <div className="cart-line__info">
               <p className="cart-line__name">
