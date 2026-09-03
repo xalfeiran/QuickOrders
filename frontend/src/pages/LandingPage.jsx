@@ -1,8 +1,14 @@
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
+
 // Página de bienvenida en la URL base ("/"). Muestra QuickOrder como
 // producto: pedir para recoger o a domicilio en tus lugares favoritos.
 // Por ahora es solo informativa (sin enlace al menú); cuando haya un
 // listado de negocios público, aquí es donde se dejará elegir uno.
 export default function LandingPage() {
+  // La pestaña debe anunciar la app (Quick Order), no el negocio de
+  // ejemplo al que redirige "*" en App.jsx.
+  useDocumentTitle('Quick Order — Pide para recoger o a domicilio');
+
   return (
     <div className="landing">
       <section className="landing__hero">
