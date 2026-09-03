@@ -21,4 +21,12 @@ return [
     // endpoints (/api/menu, /orders/draft without a businessSlug) resolve to it.
     'default_business_slug' => env('DEFAULT_BUSINESS_SLUG', 'alita-mia'),
 
+    // Seeded second business, purely for trying out multi-business behavior
+    // (the superadmin business switcher, tenant isolation) — does not affect
+    // the default business above (see database/seeders/TestBusinessSeeder.php).
+    'test_business_slug' => env('TEST_BUSINESS_SLUG', 'test-kitchen'),
+    'test_business_name' => env('TEST_BUSINESS_NAME', 'QuickOrder Test Kitchen'),
+    'test_business_admin_email' => env('TEST_BUSINESS_ADMIN_EMAIL', 'test-kitchen@quickorder.local'),
+    'test_business_admin_password' => env('TEST_BUSINESS_ADMIN_PASSWORD', 'changeme'),
+
 ];
